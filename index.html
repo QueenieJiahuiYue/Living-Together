@@ -5,28 +5,28 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
 <meta name="apple-mobile-web-app-capable" content="yes" />
 <meta name="apple-mobile-web-app-status-bar-style" content="default" />
-<meta name="apple-mobile-web-app-title" content="Living Together" />
+<meta name="apple-mobile-web-app-title" content="Together" />
 <meta name="theme-color" content="#FBF5EF" />
-<title>Living Together</title>
-<link rel="manifest" href='data:application/json,{"name":"Living Together","short_name":"LivingTogether","start_url":".","display":"standalone","background_color":"%23FBF5EF","theme_color":"%23FBF5EF","icons":[]}' />
+<title>Together</title>
+<link rel="manifest" href='data:application/json,{"name":"Together","short_name":"Together","start_url":".","display":"standalone","background_color":"%23FBF5EF","theme_color":"%23FBF5EF","icons":[]}' />
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700;800&family=ZCOOL+KuaiLe&display=swap" rel="stylesheet" />
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@500;600;700;800;900&family=Noto+Sans+SC:wght@400;500;700;900&display=swap" rel="stylesheet" />
 <style>
   :root{
     --bg:#FBF5EF; --card:#fff; --ink:#3A2E28; --muted:#A6978A; --line:#F0E4D6;
-    --soft:#FDF7F0; --ok:#2E9E7B; --warn:#E08A46; --p0:#4C7CF0; --p1:#F0729E;
+    --soft:#FDF7F0; --ok:#3A9B78; --warn:#D9A441; --p0:#C97B4A; --p1:#6B4E71;
   }
   *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
   html,body{margin:0;padding:0;}
   body{
     background:var(--bg); color:var(--ink); min-height:100vh;
-    font-family:'Baloo 2','ZCOOL KuaiLe',-apple-system,"PingFang SC","Microsoft YaHei",system-ui,sans-serif;
+    font-family:'Nunito','Noto Sans SC',-apple-system,"PingFang SC","Microsoft YaHei",system-ui,sans-serif;
   }
   #app{max-width:480px;margin:0 auto;padding:18px 16px 96px;min-height:100vh;}
   .center{display:flex;flex-direction:column;justify-content:center;min-height:70vh;}
   h1{font-size:23px;font-weight:800;letter-spacing:-.3px;margin:0;}
-  .brand-accent{color:var(--p1);}
+  .brand{color:var(--p1);font-weight:900;}
   .sub{font-size:12px;color:var(--muted);margin-top:2px;}
   .card{background:var(--card);border:1px solid var(--line);border-radius:20px;
     box-shadow:0 2px 10px rgba(58,46,40,.05);}
@@ -55,6 +55,7 @@
   .dot{display:inline-block;width:7px;height:7px;border-radius:50%;flex-shrink:0;}
   .avatar{border-radius:50%;color:#fff;display:flex;align-items:center;justify-content:center;
     font-weight:700;flex-shrink:0;box-shadow:0 2px 6px rgba(58,46,40,.14);}
+  .avatar.you{box-shadow:0 0 0 3px var(--bg),0 0 0 5px var(--ring),0 2px 6px rgba(58,46,40,.14);}
   .del{border:none;background:transparent;color:#CBBFB0;cursor:pointer;font-size:14px;padding:6px 4px;flex-shrink:0;}
   .tag{font-size:11px;font-weight:700;padding:2px 7px;border-radius:6px;}
   .tab-bar{position:fixed;left:50%;transform:translateX(-50%);bottom:0;width:100%;max-width:480px;
@@ -111,8 +112,8 @@ const fmtDate = d => { if(!d) return ""; const [ , m, day] = d.split("-"); retur
 const esc = s => (s||"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 const colorOf = name => name===names[0] ? PC[0] : PC[1];
 
-function avatar(name,size,color){
-  return `<div class="avatar" style="width:${size}px;height:${size}px;font-size:${size*0.42}px;background:${color}">${esc((name||"?").slice(0,1))}</div>`;
+function avatar(name,size,color,isYou){
+  return `<div class="avatar${isYou?' you':''}" style="width:${size}px;height:${size}px;font-size:${size*0.42}px;background:${color};--ring:${color}">${esc((name||"?").slice(0,1))}</div>`;
 }
 
 // ---------- 启动 ----------
@@ -187,7 +188,7 @@ async function refresh(){ await loadNames(); await loadAll(); render(); }
 // ---------- 登录页 ----------
 function renderLogin(){
   app.innerHTML = `<div class="center">
-    <h1 style="text-align:center">Living <span class="brand-accent">Together</span></h1>
+    <h1 class="brand" style="text-align:center">Together</h1>
     <p class="sub" style="text-align:center;margin-bottom:22px">登录你们的共用小窝 🏡</p>
     <div class="card pad">
       <div class="fld"><div class="lbl">邮箱</div><input id="email" type="email" placeholder="你的邮箱" autocomplete="username"></div>
@@ -225,7 +226,7 @@ function render(){
   const meColor = colorOf(profileName);
   app.innerHTML = `
     <div class="row" style="justify-content:space-between;padding:4px 2px 14px">
-      <div><h1>Living <span class="brand-accent">Together</span></h1><div class="sub">${esc(names[0])} · ${esc(names[1])} 的共用小窝 🏡</div></div>
+      <div><h1 class="brand">Together</h1><div class="sub">${esc(names[0])} · ${esc(names[1])} 的共用小窝 🏡</div></div>
       <div class="row" style="gap:8px">
         <div class="row" style="gap:6px;font-size:12px;color:var(--muted)">${avatar(profileName,24,meColor)}你</div>
         <button class="del" id="gear" style="font-size:18px">⚙️</button>
@@ -304,11 +305,11 @@ function renderLedger(){
   document.getElementById("body").innerHTML = `
     <div class="card hero" style="margin-bottom:16px">
       <div class="row" style="justify-content:space-between">
-        <div style="text-align:center;flex:1">${avatar(p0,44,PC[0])}
-          <div style="font-size:13px;margin-top:6px;font-weight:600">${esc(p0)}${profileName===p0?' <span class="muted" style="font-weight:400">(你)</span>':''}</div></div>
+        <div style="text-align:center;flex:1">${avatar(p0,44,PC[0],profileName===p0)}
+          <div style="font-size:13px;margin-top:8px;font-weight:600">${esc(p0)}</div></div>
         <div style="flex:1.3;text-align:center">${heroMid}</div>
-        <div style="text-align:center;flex:1">${avatar(p1,44,PC[1])}
-          <div style="font-size:13px;margin-top:6px;font-weight:600">${esc(p1)}${profileName===p1?' <span class="muted" style="font-weight:400">(你)</span>':''}</div></div>
+        <div style="text-align:center;flex:1">${avatar(p1,44,PC[1],profileName===p1)}
+          <div style="font-size:13px;margin-top:8px;font-weight:600">${esc(p1)}</div></div>
       </div>
       <div class="beam"><div style="width:${leftW}%;background:var(--p0)"></div><div style="width:${100-leftW}%;background:var(--p1)"></div></div>
       ${bal!==0?`<div style="margin-top:14px;background:var(--soft);border:1px solid var(--line);border-radius:12px;padding:10px 12px" class="row">
