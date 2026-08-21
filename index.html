@@ -5,46 +5,56 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
 <meta name="apple-mobile-web-app-capable" content="yes" />
 <meta name="apple-mobile-web-app-status-bar-style" content="default" />
-<meta name="apple-mobile-web-app-title" content="两口账" />
-<meta name="theme-color" content="#F5F2EC" />
-<title>两口账</title>
-<link rel="manifest" href='data:application/json,{"name":"两口账","short_name":"两口账","start_url":".","display":"standalone","background_color":"%23F5F2EC","theme_color":"%23F5F2EC","icons":[]}' />
+<meta name="apple-mobile-web-app-title" content="Living Together" />
+<meta name="theme-color" content="#FBF5EF" />
+<title>Living Together</title>
+<link rel="manifest" href='data:application/json,{"name":"Living Together","short_name":"LivingTogether","start_url":".","display":"standalone","background_color":"%23FBF5EF","theme_color":"%23FBF5EF","icons":[]}' />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700;800&family=ZCOOL+KuaiLe&display=swap" rel="stylesheet" />
 <style>
   :root{
-    --bg:#F5F2EC; --card:#fff; --ink:#26221D; --muted:#948B80; --line:#E8E2D8;
-    --soft:#FBF9F5; --ok:#2E9E7B; --warn:#D9863C; --p0:#3E6DDE; --p1:#E86AA0;
+    --bg:#FBF5EF; --card:#fff; --ink:#3A2E28; --muted:#A6978A; --line:#F0E4D6;
+    --soft:#FDF7F0; --ok:#2E9E7B; --warn:#E08A46; --p0:#4C7CF0; --p1:#F0729E;
   }
   *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
   html,body{margin:0;padding:0;}
   body{
     background:var(--bg); color:var(--ink); min-height:100vh;
-    font-family:-apple-system,"PingFang SC","Microsoft YaHei",system-ui,sans-serif;
+    font-family:'Baloo 2','ZCOOL KuaiLe',-apple-system,"PingFang SC","Microsoft YaHei",system-ui,sans-serif;
   }
   #app{max-width:480px;margin:0 auto;padding:18px 16px 96px;min-height:100vh;}
   .center{display:flex;flex-direction:column;justify-content:center;min-height:70vh;}
-  h1{font-size:22px;font-weight:800;letter-spacing:-.5px;margin:0;}
+  h1{font-size:23px;font-weight:800;letter-spacing:-.3px;margin:0;}
+  .brand-accent{color:var(--p1);}
   .sub{font-size:12px;color:var(--muted);margin-top:2px;}
-  .card{background:var(--card);border:1px solid var(--line);border-radius:18px;
-    box-shadow:0 1px 2px rgba(38,34,29,.04);}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:20px;
+    box-shadow:0 2px 10px rgba(58,46,40,.05);}
   .pad{padding:16px;}
   .row{display:flex;align-items:center;gap:12px;}
   .muted{color:var(--muted);}
   .lbl{font-size:12px;color:var(--muted);font-weight:600;margin-bottom:6px;}
   .fld{margin-bottom:12px;}
-  input,select{width:100%;padding:11px 13px;border:1.5px solid var(--line);border-radius:12px;
+  input,select{width:100%;padding:11px 13px;border:1.5px solid var(--line);border-radius:14px;
     font-size:15px;background:var(--soft);color:var(--ink);outline:none;font-family:inherit;}
-  input:focus,select:focus{border-color:var(--ink);background:#fff;}
-  .btn{width:100%;padding:13px;border:none;border-radius:13px;background:var(--ink);color:#fff;
-    font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;}
+  input:focus,select:focus{border-color:var(--p1);background:#fff;}
+  .btn{width:100%;padding:13px;border:none;border-radius:15px;background:var(--ink);color:#fff;
+    font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;transition:transform .12s ease;}
+  .btn:active{transform:scale(.97);}
   .btn:disabled{background:#CFC8BC;cursor:not-allowed;}
-  .ghost{width:100%;margin-top:12px;padding:11px;border:1.5px solid var(--line);border-radius:12px;
-    background:var(--soft);color:var(--ink);font-size:13.5px;font-weight:600;cursor:pointer;font-family:inherit;}
-  .seg{display:flex;gap:6px;background:var(--soft);padding:4px;border-radius:12px;border:1.5px solid var(--line);}
-  .seg button{flex:1;padding:9px 6px;border-radius:9px;border:none;cursor:pointer;font-size:14px;
-    font-weight:600;color:var(--muted);background:transparent;font-family:inherit;}
+  .ghost{width:100%;margin-top:12px;padding:11px;border:1.5px solid var(--line);border-radius:14px;
+    background:var(--soft);color:var(--ink);font-size:13.5px;font-weight:600;cursor:pointer;font-family:inherit;
+    transition:transform .12s ease;}
+  .ghost:active{transform:scale(.97);}
+  .seg{display:flex;gap:6px;background:var(--soft);padding:4px;border-radius:14px;border:1.5px solid var(--line);}
+  .seg button{flex:1;padding:9px 6px;border-radius:11px;border:none;cursor:pointer;font-size:14px;
+    display:flex;align-items:center;justify-content:center;gap:5px;
+    font-weight:600;color:var(--muted);background:transparent;font-family:inherit;transition:transform .12s ease;}
   .seg button.on{color:#fff;}
+  .seg button:active{transform:scale(.96);}
+  .dot{display:inline-block;width:7px;height:7px;border-radius:50%;flex-shrink:0;}
   .avatar{border-radius:50%;color:#fff;display:flex;align-items:center;justify-content:center;
-    font-weight:700;flex-shrink:0;}
+    font-weight:700;flex-shrink:0;box-shadow:0 2px 6px rgba(58,46,40,.14);}
   .del{border:none;background:transparent;color:#CBBFB0;cursor:pointer;font-size:14px;padding:6px 4px;flex-shrink:0;}
   .tag{font-size:11px;font-weight:700;padding:2px 7px;border-radius:6px;}
   .tab-bar{position:fixed;left:50%;transform:translateX(-50%);bottom:0;width:100%;max-width:480px;
@@ -62,10 +72,9 @@
   .err{color:#C0392B;font-size:13px;margin-top:8px;text-align:center;}
   .hint{font-size:11.5px;color:var(--muted);line-height:1.5;}
   .link{color:var(--p0);cursor:pointer;text-decoration:underline;font-size:13px;}
-  .hero{padding:20px 18px;background:linear-gradient(160deg,#fff,#FBF8F3);}
+  .hero{padding:20px 18px;background:linear-gradient(160deg,#fff,#FFF1E6);}
   .money{font-variant-numeric:tabular-nums;}
-  .stat2{display:flex;align-items:stretch;}
-  .stat2 .divider{width:1px;background:var(--line);}
+  .divider{width:1px;align-self:stretch;background:var(--line);}
   details.hcard{padding:0;overflow:hidden;}
   details.hcard summary{list-style:none;cursor:pointer;padding:12px 14px;display:flex;align-items:center;gap:10px;}
   details.hcard summary::-webkit-details-marker{display:none;}
@@ -178,8 +187,8 @@ async function refresh(){ await loadNames(); await loadAll(); render(); }
 // ---------- 登录页 ----------
 function renderLogin(){
   app.innerHTML = `<div class="center">
-    <h1 style="text-align:center">两口账</h1>
-    <p class="sub" style="text-align:center;margin-bottom:22px">登录你们的共用账本</p>
+    <h1 style="text-align:center">Living <span class="brand-accent">Together</span></h1>
+    <p class="sub" style="text-align:center;margin-bottom:22px">登录你们的共用小窝 🏡</p>
     <div class="card pad">
       <div class="fld"><div class="lbl">邮箱</div><input id="email" type="email" placeholder="你的邮箱" autocomplete="username"></div>
       <div class="fld"><div class="lbl">密码</div><input id="pw" type="password" placeholder="密码" autocomplete="current-password"></div>
@@ -216,7 +225,7 @@ function render(){
   const meColor = colorOf(profileName);
   app.innerHTML = `
     <div class="row" style="justify-content:space-between;padding:4px 2px 14px">
-      <div><h1>两口账</h1><div class="sub">${esc(names[0])} · ${esc(names[1])} 的共用小账本</div></div>
+      <div><h1>Living <span class="brand-accent">Together</span></h1><div class="sub">${esc(names[0])} · ${esc(names[1])} 的共用小窝 🏡</div></div>
       <div class="row" style="gap:8px">
         <div class="row" style="gap:6px;font-size:12px;color:var(--muted)">${avatar(profileName,24,meColor)}你</div>
         <button class="del" id="gear" style="font-size:18px">⚙️</button>
@@ -254,10 +263,14 @@ function splitExpenses(){
   }
   return { active:[...cur].reverse(), history };
 }
-function personTotals(list){
+// 「为对方花了多少」比「一共花了多少」更有参与感，所以按人只统计 forOther，shared 单独算一份共同支出
+function giveTotals(list){
   const t={ [names[0]]:0, [names[1]]:0 };
-  for(const e of list){ if(e.type==="settle") continue; t[e.payer]=(t[e.payer]||0)+Number(e.amount); }
+  for(const e of list){ if(e.type==="forOther") t[e.payer]=(t[e.payer]||0)+Number(e.amount); }
   return t;
+}
+function sharedTotal(list){
+  return list.filter(e=>e.type==="shared").reduce((s,e)=>s+Number(e.amount),0);
 }
 function historyGroupHtml(group){
   const settleEntry=group[group.length-1];
@@ -280,7 +293,7 @@ function renderLedger(){
   const bal=computeBalance(active);
   const creditor = bal>0?p0:p1, debtor = bal>0?p1:p0;
   const beamRef=200, t=Math.max(-1,Math.min(1,bal/beamRef)), leftW=50-t*45;
-  const totals=personTotals(active);
+  const gives=giveTotals(active), shareSum=sharedTotal(active);
 
   let heroMid = bal===0
     ? `<div style="font-size:30px">🤝</div><div style="font-size:14px;color:var(--ok);font-weight:700;margin-top:2px">两清啦</div>`
@@ -300,18 +313,19 @@ function renderLedger(){
       <div class="beam"><div style="width:${leftW}%;background:var(--p0)"></div><div style="width:${100-leftW}%;background:var(--p1)"></div></div>
       ${bal!==0?`<div style="margin-top:14px;background:var(--soft);border:1px solid var(--line);border-radius:12px;padding:10px 12px" class="row">
         <span style="font-size:18px">🛒</span><span style="font-size:13.5px">接下来轮到 <b style="color:${colorOf(debtor)}">${esc(debtor)}</b> 多买点家用</span></div>
-        <button class="ghost" id="settle">结清本期，账目明细清零</button>`:''}
+        <button class="ghost" id="settle">🎉 结清本期，账目明细清零</button>`:''}
     </div>
 
     <div class="card pad" style="margin-bottom:16px">
-      <div style="font-weight:700;font-size:15px;margin-bottom:14px">记一笔</div>
+      <div style="font-weight:700;font-size:15px;margin-bottom:14px">✍️ 记一笔</div>
       <div class="fld"><div class="lbl">谁付的钱</div>
         <div class="seg" id="segPayer">${[[p0,PC[0]],[p1,PC[1]]].map(([n,c])=>
-          `<button data-v="${esc(n)}" data-c="${c}" class="${n===profileName?'on':''}" style="${n===profileName?`background:${c}`:''}">${esc(n)}</button>`).join("")}</div></div>
+          `<button data-v="${esc(n)}" data-c="${c}" class="${n===profileName?'on':''}" style="${n===profileName?`background:${c}`:''}">
+            <span class="dot" style="background:${n===profileName?'#fff':c}"></span>${esc(n)}</button>`).join("")}</div></div>
       <div class="fld"><div class="lbl">这笔属于</div>
         <div class="seg" id="segType">
-          <button data-v="forOther" class="on" style="background:var(--ink)">为对方花的</button>
-          <button data-v="shared">一起分摊 (对半)</button></div></div>
+          <button data-v="forOther" class="on" style="background:var(--ink)">💝 为对方花的</button>
+          <button data-v="shared">🤝 一起分摊 (对半)</button></div></div>
       <div class="row" style="gap:10px">
         <div class="fld" style="flex:1"><div class="lbl">金额</div><input id="amt" inputmode="decimal" placeholder="0.00"></div>
         <div class="fld" style="flex:1"><div class="lbl">日期</div><input id="date" type="date" value="${today()}"></div>
@@ -321,15 +335,23 @@ function renderLedger(){
     </div>
 
     <div class="lbl" style="margin:4px 4px 10px">账目明细（${active.length}）</div>
-    <div class="card pad stat2" style="margin-bottom:12px">
+    <div class="card pad row" style="margin-bottom:12px">
       <div style="flex:1;text-align:center">
-        <div class="muted" style="font-size:12px">${esc(p0)}共花费</div>
-        <div class="money" style="font-size:17px;font-weight:800;color:${PC[0]};margin-top:3px">${money(totals[p0]||0)}</div>
+        <div style="font-size:17px">💐</div>
+        <div class="muted" style="font-size:11px;margin-top:3px">${esc(p0)}为${esc(p1)}花了</div>
+        <div class="money" style="font-size:15.5px;font-weight:800;color:${PC[0]};margin-top:2px">${money(gives[p0]||0)}</div>
       </div>
       <div class="divider"></div>
       <div style="flex:1;text-align:center">
-        <div class="muted" style="font-size:12px">${esc(p1)}共花费</div>
-        <div class="money" style="font-size:17px;font-weight:800;color:${PC[1]};margin-top:3px">${money(totals[p1]||0)}</div>
+        <div style="font-size:17px">🤝</div>
+        <div class="muted" style="font-size:11px;margin-top:3px">一起分摊</div>
+        <div class="money" style="font-size:15.5px;font-weight:800;color:var(--ink);margin-top:2px">${money(shareSum)}</div>
+      </div>
+      <div class="divider"></div>
+      <div style="flex:1;text-align:center">
+        <div style="font-size:17px">💐</div>
+        <div class="muted" style="font-size:11px;margin-top:3px">${esc(p1)}为${esc(p0)}花了</div>
+        <div class="money" style="font-size:15.5px;font-weight:800;color:${PC[1]};margin-top:2px">${money(gives[p1]||0)}</div>
       </div>
     </div>
     ${active.length===0?`<div class="empty">${history.length?"本期还没有新记录，你们已经结清啦 🎉":"还没有记录。上面记第一笔试试～"}</div>`:
@@ -359,7 +381,7 @@ function renderLedger(){
 }
 function expRow(e){
   const isShared=e.type==="shared", isSettle=e.type==="settle";
-  const tag=isSettle?"结清":isShared?"分摊":"为对方";
+  const tag=isSettle?"✅ 结清":isShared?"🤝 分摊":"💝 为对方";
   const tc=isSettle?"var(--ok)":isShared?"var(--warn)":colorOf(e.payer);
   return `<div class="card pad row" style="padding:12px 14px">
     ${avatar(e.payer,36,colorOf(e.payer))}
@@ -381,7 +403,7 @@ function renderChores(){
   const last=sorted[0];
   document.getElementById("body").innerHTML = `
     <div class="card hero" style="margin-bottom:16px">
-      <div class="lbl" style="margin-bottom:10px">上一次做家务</div>
+      <div class="lbl" style="margin-bottom:10px">🧹 上一次做家务</div>
       ${!last?`<div class="muted" style="font-size:14px">还没记录，下面记一条吧。</div>`:
         `<div class="row" style="gap:14px">${avatar(last.who==="一起"?"合":last.who,46, last.who==="一起"?"var(--ink)":colorOf(last.who))}
           <div style="flex:1"><div style="font-size:17px;font-weight:800">${esc(last.chore_name)}</div>
@@ -390,13 +412,13 @@ function renderChores(){
     </div>
 
     <div class="card pad" style="margin-bottom:16px">
-      <div style="font-weight:700;font-size:15px;margin-bottom:14px">记一条家务</div>
+      <div style="font-weight:700;font-size:15px;margin-bottom:14px">🧺 记一条家务</div>
       <div class="fld"><div class="lbl">谁做的</div>
         <div class="seg" id="segWho">${[[p0,PC[0]],[p1,PC[1]],["一起","var(--ink)"]].map(([n,c])=>
-          `<button data-v="${esc(n)}" data-c="${c}" class="${n===profileName?'on':''}" style="${n===profileName?`background:${c}`:''}">${esc(n)==="一起"?"两人一起":esc(n)}</button>`).join("")}</div></div>
+          `<button data-v="${esc(n)}" data-c="${c}" class="${n===profileName?'on':''}" style="${n===profileName?`background:${c}`:''}">${esc(n)==="一起"?"🤝 两人一起":`<span class="dot" style="background:${n===profileName?'#fff':c}"></span>${esc(n)}`}</button>`).join("")}</div></div>
       <div class="fld"><div class="lbl">家务类型</div>
-        <div class="seg" id="segCType"><button data-v="regular" class="on" style="background:var(--ink)">日常家务</button>
-          <button data-v="together">大扫除/一起做</button></div></div>
+        <div class="seg" id="segCType"><button data-v="regular" class="on" style="background:var(--ink)">🧹 日常家务</button>
+          <button data-v="together">✨ 大扫除/一起做</button></div></div>
       <div class="row" style="gap:10px">
         <div class="fld" style="flex:1.4"><div class="lbl">做了什么</div><input id="cname" placeholder="洗碗 / 拖地 / 倒垃圾"></div>
         <div class="fld" style="flex:1"><div class="lbl">日期</div><input id="cdate" type="date" value="${today()}"></div></div>
@@ -436,7 +458,7 @@ function renderTodo(){
 
   document.getElementById("body").innerHTML = `
     <div class="card pad" style="margin-bottom:16px">
-      <div style="font-weight:700;font-size:15px;margin-bottom:14px">加一个待办 / 提醒</div>
+      <div style="font-weight:700;font-size:15px;margin-bottom:14px">📋 加一个待办 / 提醒</div>
       <div class="fld"><div class="lbl">要一起做的事</div><input id="title" placeholder="晚上一起去买纸 / 等修理工上门"></div>
       <div class="row" style="gap:10px">
         <div class="fld" style="flex:1.4"><div class="lbl">备注（可选）</div><input id="note" placeholder="地点 / 注意事项"></div>
