@@ -11,11 +11,12 @@
 <link rel="manifest" href='data:application/json,{"name":"TwoGather","short_name":"TwoGather","start_url":".","display":"standalone","background_color":"%23FBF5EF","theme_color":"%23FBF5EF","icons":[]}' />
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@500;600;700;800;900&family=Noto+Sans+SC:wght@400;500;700;900&display=swap" rel="stylesheet" />
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,600;0,700;1,600&family=Noto+Serif+SC:wght@500;600;700;900&family=Nunito:wght@500;600;700;800&family=Noto+Sans+SC:wght@400;500;700&display=swap" rel="stylesheet" />
 <style>
   :root{
     --bg:#FBF5EF; --card:#fff; --ink:#3A2E28; --muted:#A6978A; --line:#F0E4D6;
     --soft:#FDF7F0; --ok:#3A9B78; --warn:#D9A441; --p0:#C08A6B; --p1:#8C7189;
+    --serif:'Fraunces','Noto Serif SC',Georgia,"Songti SC",serif;
   }
   *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
   html,body{margin:0;padding:0;}
@@ -25,8 +26,9 @@
   }
   #app{max-width:480px;margin:0 auto;padding:18px 16px 96px;min-height:100vh;}
   .center{display:flex;flex-direction:column;justify-content:center;min-height:70vh;}
-  h1{font-size:23px;font-weight:800;letter-spacing:-.3px;margin:0;}
-  .brand{color:var(--p1);font-weight:900;}
+  h1{font-family:var(--serif);font-size:25px;font-weight:600;letter-spacing:-.2px;margin:0;}
+  .brand{color:var(--p1);font-weight:700;font-style:italic;}
+  .title{font-family:var(--serif);font-weight:600;font-size:16.5px;}
   .sub{font-size:12px;color:var(--muted);margin-top:2px;}
   .card{background:var(--card);border:1px solid var(--line);border-radius:20px;
     box-shadow:0 2px 10px rgba(58,46,40,.05);}
@@ -75,6 +77,7 @@
   .link{color:var(--p0);cursor:pointer;text-decoration:underline;font-size:13px;}
   .hero{padding:20px 18px;background:linear-gradient(160deg,#fff,#FFF1E6);}
   .money{font-variant-numeric:tabular-nums;}
+  .money-lg{font-variant-numeric:tabular-nums;font-family:var(--serif);}
   .divider{width:1px;align-self:stretch;background:var(--line);}
   details.hcard{padding:0;overflow:hidden;}
   details.hcard summary{list-style:none;cursor:pointer;padding:12px 14px;display:flex;align-items:center;gap:10px;}
@@ -320,7 +323,7 @@ function renderLedger(){
   let heroMid = bal===0
     ? `<div style="font-size:30px">🤝</div><div style="font-size:14px;color:var(--ok);font-weight:700;margin-top:2px">两清啦</div>`
     : `<div style="font-size:12px;color:var(--muted);margin-bottom:2px">${esc(debtor)} 该给 ${esc(creditor)}</div>
-       <div class="money" style="font-size:30px;font-weight:800;letter-spacing:-1px;color:${colorOf(debtor)}">${money(Math.abs(bal))}</div>
+       <div class="money-lg" style="font-size:32px;font-weight:700;letter-spacing:-.5px;color:${colorOf(debtor)}">${money(Math.abs(bal))}</div>
        <div style="font-size:20px;color:var(--muted);margin-top:-2px">${bal>0?"→":"←"}</div>`;
 
   document.getElementById("body").innerHTML = `
@@ -339,7 +342,7 @@ function renderLedger(){
     </div>
 
     <div class="card pad" style="margin-bottom:16px">
-      <div style="font-weight:700;font-size:15px;margin-bottom:14px">✍️ 记一笔</div>
+      <div class="title" style="margin-bottom:14px">✍️ 记一笔</div>
       <div class="fld"><div class="lbl">谁付的钱</div>
         <div class="seg" id="segPayer">${[[p0,PC[0]],[p1,PC[1]]].map(([n,c])=>
           `<button data-v="${esc(n)}" data-c="${c}" class="${n===profileName?'on':''}" style="${n===profileName?`background:${c}`:''}">
@@ -428,13 +431,13 @@ function renderChores(){
       <div class="lbl" style="margin-bottom:10px">🧹 上一次做家务</div>
       ${!last?`<div class="muted" style="font-size:14px">还没记录，下面记一条吧。</div>`:
         `<div class="row" style="gap:14px">${avatar(last.who==="一起"?"合":last.who,46, last.who==="一起"?"var(--ink)":colorOf(last.who))}
-          <div style="flex:1"><div style="font-size:17px;font-weight:800">${esc(last.chore_name)}</div>
+          <div style="flex:1"><div class="title" style="font-size:18px">${esc(last.chore_name)}</div>
           <div class="muted" style="font-size:13px;margin-top:3px">
             <b style="color:${last.who==="一起"?"var(--ink)":colorOf(last.who)}">${esc(last.who)}</b> · ${fmtDate(last.done_on)} · ${last.type==="together"?"一起做的":"日常家务"}</div></div></div>`}
     </div>
 
     <div class="card pad" style="margin-bottom:16px">
-      <div style="font-weight:700;font-size:15px;margin-bottom:14px">🧺 记一条家务</div>
+      <div class="title" style="margin-bottom:14px">🧺 记一条家务</div>
       <div class="fld"><div class="lbl">谁做的</div>
         <div class="seg" id="segWho">${[[p0,PC[0]],[p1,PC[1]],["一起","var(--ink)"]].map(([n,c])=>
           `<button data-v="${esc(n)}" data-c="${c}" class="${n===profileName?'on':''}" style="${n===profileName?`background:${c}`:''}">${esc(n)==="一起"?"🤝 两人一起":`<span class="dot" style="background:${n===profileName?'#fff':c}"></span>${esc(n)}`}</button>`).join("")}</div></div>
@@ -480,7 +483,7 @@ function renderTodo(){
 
   document.getElementById("body").innerHTML = `
     <div class="card pad" style="margin-bottom:16px">
-      <div style="font-weight:700;font-size:15px;margin-bottom:14px">📋 加一个待办 / 提醒</div>
+      <div class="title" style="margin-bottom:14px">📋 加一个待办 / 提醒</div>
       <div class="fld"><div class="lbl">要一起做的事</div><input id="title" placeholder="晚上一起去买纸 / 等修理工上门"></div>
       <div class="row" style="gap:10px">
         <div class="fld" style="flex:1.4"><div class="lbl">备注（可选）</div><input id="note" placeholder="地点 / 注意事项"></div>
@@ -512,7 +515,7 @@ function openSettings(){
     border:2px solid ${active?'var(--ink)':'transparent'};box-shadow:0 0 0 1px var(--line);background:${c};cursor:pointer;padding:0;flex-shrink:0"></button>`;
   wrap.innerHTML=`<div style="width:100%;max-width:480px;background:var(--bg);border-radius:22px 22px 0 0;
     padding:20px 18px calc(24px + env(safe-area-inset-bottom));max-height:85vh;overflow-y:auto" id="sheet">
-    <div class="row" style="justify-content:space-between;margin-bottom:16px"><div style="font-size:18px;font-weight:800">设置</div>
+    <div class="row" style="justify-content:space-between;margin-bottom:16px"><div class="title" style="font-size:19px">设置</div>
       <button class="del" id="closeSet" style="font-size:20px">✕</button></div>
     <div class="lbl">两人的名字</div>
     <div class="row" style="gap:10px;margin-bottom:16px"><input id="na" value="${esc(names[0])}"><input id="nb" value="${esc(names[1])}"></div>
