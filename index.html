@@ -1,0 +1,455 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="default" />
+<meta name="apple-mobile-web-app-title" content="两口账" />
+<meta name="theme-color" content="#F5F2EC" />
+<title>两口账</title>
+<link rel="manifest" href='data:application/json,{"name":"两口账","short_name":"两口账","start_url":".","display":"standalone","background_color":"%23F5F2EC","theme_color":"%23F5F2EC","icons":[]}' />
+<style>
+  :root{
+    --bg:#F5F2EC; --card:#fff; --ink:#26221D; --muted:#948B80; --line:#E8E2D8;
+    --soft:#FBF9F5; --ok:#2E9E7B; --warn:#D9863C; --p0:#3E6DDE; --p1:#E86AA0;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:var(--bg); color:var(--ink); min-height:100vh;
+    font-family:-apple-system,"PingFang SC","Microsoft YaHei",system-ui,sans-serif;
+  }
+  #app{max-width:480px;margin:0 auto;padding:18px 16px 96px;min-height:100vh;}
+  .center{display:flex;flex-direction:column;justify-content:center;min-height:70vh;}
+  h1{font-size:22px;font-weight:800;letter-spacing:-.5px;margin:0;}
+  .sub{font-size:12px;color:var(--muted);margin-top:2px;}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:18px;
+    box-shadow:0 1px 2px rgba(38,34,29,.04);}
+  .pad{padding:16px;}
+  .row{display:flex;align-items:center;gap:12px;}
+  .muted{color:var(--muted);}
+  .lbl{font-size:12px;color:var(--muted);font-weight:600;margin-bottom:6px;}
+  .fld{margin-bottom:12px;}
+  input,select{width:100%;padding:11px 13px;border:1.5px solid var(--line);border-radius:12px;
+    font-size:15px;background:var(--soft);color:var(--ink);outline:none;font-family:inherit;}
+  input:focus,select:focus{border-color:var(--ink);background:#fff;}
+  .btn{width:100%;padding:13px;border:none;border-radius:13px;background:var(--ink);color:#fff;
+    font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;}
+  .btn:disabled{background:#CFC8BC;cursor:not-allowed;}
+  .ghost{width:100%;margin-top:12px;padding:11px;border:1.5px solid var(--line);border-radius:12px;
+    background:var(--soft);color:var(--ink);font-size:13.5px;font-weight:600;cursor:pointer;font-family:inherit;}
+  .seg{display:flex;gap:6px;background:var(--soft);padding:4px;border-radius:12px;border:1.5px solid var(--line);}
+  .seg button{flex:1;padding:9px 6px;border-radius:9px;border:none;cursor:pointer;font-size:14px;
+    font-weight:600;color:var(--muted);background:transparent;font-family:inherit;}
+  .seg button.on{color:#fff;}
+  .avatar{border-radius:50%;color:#fff;display:flex;align-items:center;justify-content:center;
+    font-weight:700;flex-shrink:0;}
+  .del{border:none;background:transparent;color:#CBBFB0;cursor:pointer;font-size:14px;padding:6px 4px;flex-shrink:0;}
+  .tag{font-size:11px;font-weight:700;padding:2px 7px;border-radius:6px;}
+  .tab-bar{position:fixed;left:50%;transform:translateX(-50%);bottom:0;width:100%;max-width:480px;
+    background:rgba(255,255,255,.92);backdrop-filter:blur(10px);border-top:1px solid var(--line);
+    display:flex;padding-bottom:env(safe-area-inset-bottom);z-index:20;}
+  .tab-bar button{flex:1;border:none;background:transparent;cursor:pointer;padding:10px 0 6px;
+    display:flex;flex-direction:column;align-items:center;gap:3px;color:var(--muted);font-family:inherit;}
+  .tab-bar button .ic{font-size:20px;opacity:.55;}
+  .tab-bar button.on{color:var(--ink);} .tab-bar button.on .ic{opacity:1;}
+  .tab-bar button .tl{font-size:11px;font-weight:500;} .tab-bar button.on .tl{font-weight:700;}
+  .empty{text-align:center;color:var(--muted);font-size:13.5px;padding:28px 12px;
+    border:1px dashed var(--line);border-radius:16px;}
+  .beam{margin-top:16px;height:10px;border-radius:6px;overflow:hidden;display:flex;border:1px solid var(--line);}
+  .list{display:flex;flex-direction:column;gap:8px;}
+  .err{color:#C0392B;font-size:13px;margin-top:8px;text-align:center;}
+  .hint{font-size:11.5px;color:var(--muted);line-height:1.5;}
+  .link{color:var(--p0);cursor:pointer;text-decoration:underline;font-size:13px;}
+  .hero{padding:20px 18px;background:linear-gradient(160deg,#fff,#FBF8F3);}
+  .money{font-variant-numeric:tabular-nums;}
+</style>
+</head>
+<body>
+<div id="app"><div class="center"><p class="muted" style="text-align:center">加载中…</p></div></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+/* =====================================================================
+   ↓↓↓  只需要改这两行：把你从 Supabase 复制的两个值粘进引号里  ↓↓↓
+   ===================================================================== */
+const SUPABASE_URL      = "https://zmoguaybtdqwyvbgpzuc.supabase.co/rest/v1/";
+const SUPABASE_ANON_KEY = "sb_publishable_Q7-pd6Dxs5mNyAzSXVnRzQ_AyrrBgI1";
+/* =====================================================================
+   ↑↑↑  改完这两行就不用再动代码了  ↑↑↑
+   ===================================================================== */
+
+const PC = ["var(--p0)","var(--p1)"];
+const app = document.getElementById("app");
+let supa, session=null, profileName=null, names=["我","大乐"];
+let expenses=[], chores=[], activities=[];
+let tab="ledger";
+
+// ---------- 工具 ----------
+const money = n => { const v=Math.round(n*100)/100; return "¥"+(Number.isInteger(v)?v:v.toFixed(2)); };
+const today = () => new Date().toISOString().slice(0,10);
+const fmtDate = d => { if(!d) return ""; const [ , m, day] = d.split("-"); return `${m}月${day}日`; };
+const esc = s => (s||"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const colorOf = name => name===names[0] ? PC[0] : PC[1];
+
+function avatar(name,size,color){
+  return `<div class="avatar" style="width:${size}px;height:${size}px;font-size:${size*0.42}px;background:${color}">${esc((name||"?").slice(0,1))}</div>`;
+}
+
+// ---------- 启动 ----------
+function bootError(msg){
+  app.innerHTML = `<div class="center"><div class="card pad">
+    <h1>还差一步</h1><p class="muted" style="margin-top:10px">${msg}</p></div></div>`;
+}
+(async function start(){
+  if(SUPABASE_URL.includes("粘贴") || SUPABASE_ANON_KEY.includes("粘贴")){
+    return bootError("请先按安装指南，把 Supabase 的 Project URL 和 anon key 粘进 index.html 顶部那两行，再重新上传。");
+  }
+  try{
+    supa = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+  }catch(e){ return bootError("Supabase 地址或密钥格式不对，请检查那两行是否粘贴完整。"); }
+
+  const { data } = await supa.auth.getSession();
+  session = data.session;
+  supa.auth.onAuthStateChange((_e,s)=>{ session=s; route(); });
+  route();
+})();
+
+async function route(){
+  if(!session){ return renderLogin(); }
+  await loadNames();
+  await ensureProfile();
+  if(!profileName){ return renderPickWho(); }
+  await loadAll();
+  subscribe();
+  render();
+}
+
+// ---------- 数据 ----------
+async function loadNames(){
+  const { data } = await supa.from("settings").select("*").eq("id",1).single();
+  if(data){ names=[data.name_a||"我", data.name_b||"大乐"]; }
+}
+async function saveNames(a,b){
+  names=[a,b];
+  await supa.from("settings").upsert({id:1,name_a:a,name_b:b});
+}
+async function ensureProfile(){
+  const uid = session.user.id;
+  const { data } = await supa.from("profiles").select("name").eq("user_id",uid).maybeSingle();
+  profileName = data ? data.name : null;
+}
+async function setProfile(name){
+  await supa.from("profiles").upsert({user_id:session.user.id, name});
+  profileName = name;
+}
+async function loadAll(){
+  const [ex,ch,ac] = await Promise.all([
+    supa.from("expenses").select("*").order("created_at",{ascending:false}),
+    supa.from("chores").select("*").order("created_at",{ascending:false}),
+    supa.from("activities").select("*").order("created_at",{ascending:false}),
+  ]);
+  expenses = ex.data||[]; chores = ch.data||[]; activities = ac.data||[];
+}
+let subbed=false, pollTimer=null;
+function subscribe(){
+  if(subbed) return; subbed=true;
+  supa.channel("live")
+    .on("postgres_changes",{event:"*",schema:"public",table:"expenses"},refresh)
+    .on("postgres_changes",{event:"*",schema:"public",table:"chores"},refresh)
+    .on("postgres_changes",{event:"*",schema:"public",table:"activities"},refresh)
+    .on("postgres_changes",{event:"*",schema:"public",table:"settings"},refresh)
+    .subscribe();
+  // 兜底轮询：万一实时没连上，页面可见时每 10 秒拉一次
+  pollTimer = setInterval(()=>{ if(!document.hidden) refresh(); },10000);
+}
+async function refresh(){ await loadNames(); await loadAll(); render(); }
+
+// ---------- 登录页 ----------
+function renderLogin(){
+  app.innerHTML = `<div class="center">
+    <h1 style="text-align:center">两口账</h1>
+    <p class="sub" style="text-align:center;margin-bottom:22px">登录你们的共用账本</p>
+    <div class="card pad">
+      <div class="fld"><div class="lbl">邮箱</div><input id="email" type="email" placeholder="你的邮箱" autocomplete="username"></div>
+      <div class="fld"><div class="lbl">密码</div><input id="pw" type="password" placeholder="密码" autocomplete="current-password"></div>
+      <button class="btn" id="loginBtn">登录</button>
+      <div class="err" id="loginErr"></div>
+      <p class="hint" style="margin-top:14px">账号由你们在 Supabase 后台创建（各自一个邮箱）。忘了怎么建？看安装指南第 4 步。</p>
+    </div></div>`;
+  document.getElementById("loginBtn").onclick = async ()=>{
+    const email=document.getElementById("email").value.trim();
+    const pw=document.getElementById("pw").value;
+    const errEl=document.getElementById("loginErr"); errEl.textContent="";
+    const { error } = await supa.auth.signInWithPassword({email,password:pw});
+    if(error){ errEl.textContent = "登录失败：邮箱或密码不对。"; }
+  };
+}
+
+// ---------- 选择你是谁 ----------
+function renderPickWho(){
+  app.innerHTML = `<div class="center">
+    <h1 style="text-align:center">你是哪一位？</h1>
+    <p class="sub" style="text-align:center;margin-bottom:24px">选好后这个账号就记住你了</p>
+    <div class="row" style="gap:14px">
+      ${names.map((n,i)=>`<button class="card pad who" data-n="${esc(n)}"
+        style="flex:1;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:12px;border:none">
+        ${avatar(n,56,PC[i])}<span style="font-size:17px;font-weight:700">${esc(n)}</span></button>`).join("")}
+    </div>
+    <p class="hint" style="text-align:center;margin-top:20px">名字不对？先随便选一个，进去后在 ⚙️ 里可以改。</p>
+  </div>`;
+  document.querySelectorAll(".who").forEach(b=>b.onclick=async()=>{ await setProfile(b.dataset.n); route(); });
+}
+
+// ---------- 主框架 ----------
+function render(){
+  const meColor = colorOf(profileName);
+  app.innerHTML = `
+    <div class="row" style="justify-content:space-between;padding:4px 2px 14px">
+      <div><h1>两口账</h1><div class="sub">${esc(names[0])} · ${esc(names[1])} 的共用小账本</div></div>
+      <div class="row" style="gap:8px">
+        <div class="row" style="gap:6px;font-size:12px;color:var(--muted)">${avatar(profileName,24,meColor)}你</div>
+        <button class="del" id="gear" style="font-size:18px">⚙️</button>
+      </div>
+    </div>
+    <div id="body"></div>
+    <div class="tab-bar">
+      ${[["ledger","记账","💰"],["chores","家务","🧹"],["todo","一起做","📌"]].map(([k,l,ic])=>
+        `<button class="${tab===k?"on":""}" data-tab="${k}"><span class="ic">${ic}</span><span class="tl">${l}</span></button>`).join("")}
+    </div>`;
+  document.getElementById("gear").onclick = openSettings;
+  document.querySelectorAll("[data-tab]").forEach(b=>b.onclick=()=>{tab=b.dataset.tab; render();});
+  if(tab==="ledger") renderLedger();
+  if(tab==="chores") renderChores();
+  if(tab==="todo") renderTodo();
+}
+
+// ---------- 记账 ----------
+function computeBalance(){
+  let bal=0;
+  for(const e of expenses){
+    const f = e.type==="shared" ? .5 : 1;
+    const v = Number(e.amount)*f;
+    bal += e.payer===names[0] ? v : -v;
+  }
+  return Math.round(bal*100)/100;
+}
+function renderLedger(){
+  const p0=names[0], p1=names[1];
+  const bal=computeBalance();
+  const creditor = bal>0?p0:p1, debtor = bal>0?p1:p0;
+  const beamRef=200, t=Math.max(-1,Math.min(1,bal/beamRef)), leftW=50-t*45;
+
+  let heroMid = bal===0
+    ? `<div style="font-size:30px">🤝</div><div style="font-size:14px;color:var(--ok);font-weight:700;margin-top:2px">两清啦</div>`
+    : `<div style="font-size:12px;color:var(--muted);margin-bottom:2px">${esc(debtor)} 该给 ${esc(creditor)}</div>
+       <div class="money" style="font-size:30px;font-weight:800;letter-spacing:-1px;color:${colorOf(debtor)}">${money(Math.abs(bal))}</div>
+       <div style="font-size:20px;color:var(--muted);margin-top:-2px">${bal>0?"→":"←"}</div>`;
+
+  document.getElementById("body").innerHTML = `
+    <div class="card hero" style="margin-bottom:16px">
+      <div class="row" style="justify-content:space-between">
+        <div style="text-align:center;flex:1">${avatar(p0,44,PC[0])}
+          <div style="font-size:13px;margin-top:6px;font-weight:600">${esc(p0)}${profileName===p0?' <span class="muted" style="font-weight:400">(你)</span>':''}</div></div>
+        <div style="flex:1.3;text-align:center">${heroMid}</div>
+        <div style="text-align:center;flex:1">${avatar(p1,44,PC[1])}
+          <div style="font-size:13px;margin-top:6px;font-weight:600">${esc(p1)}${profileName===p1?' <span class="muted" style="font-weight:400">(你)</span>':''}</div></div>
+      </div>
+      <div class="beam"><div style="width:${leftW}%;background:var(--p0)"></div><div style="width:${100-leftW}%;background:var(--p1)"></div></div>
+      ${bal!==0?`<div style="margin-top:14px;background:var(--soft);border:1px solid var(--line);border-radius:12px;padding:10px 12px" class="row">
+        <span style="font-size:18px">🛒</span><span style="font-size:13.5px">接下来轮到 <b style="color:${colorOf(debtor)}">${esc(debtor)}</b> 多买点家用</span></div>
+        <button class="ghost" id="settle">记一笔「结清」，账本清零</button>`:''}
+    </div>
+
+    <div class="card pad" style="margin-bottom:16px">
+      <div style="font-weight:700;font-size:15px;margin-bottom:14px">记一笔</div>
+      <div class="fld"><div class="lbl">谁付的钱</div>
+        <div class="seg" id="segPayer">${[[p0,PC[0]],[p1,PC[1]]].map(([n,c])=>
+          `<button data-v="${esc(n)}" data-c="${c}" class="${n===profileName?'on':''}" style="${n===profileName?`background:${c}`:''}">${esc(n)}</button>`).join("")}</div></div>
+      <div class="fld"><div class="lbl">这笔属于</div>
+        <div class="seg" id="segType">
+          <button data-v="forOther" class="on" style="background:var(--ink)">为对方花的</button>
+          <button data-v="shared">一起分摊 (对半)</button></div></div>
+      <div class="row" style="gap:10px">
+        <div class="fld" style="flex:1"><div class="lbl">金额</div><input id="amt" inputmode="decimal" placeholder="0.00"></div>
+        <div class="fld" style="flex:1"><div class="lbl">日期</div><input id="date" type="date" value="${today()}"></div>
+      </div>
+      <div class="fld"><div class="lbl">备注（买了啥）</div><input id="desc" placeholder="超市 / 电费 / 给对方买的礼物"></div>
+      <button class="btn" id="addExp">记上这一笔</button>
+    </div>
+
+    <div class="lbl" style="margin:4px 4px 10px">账目明细（${expenses.length}）</div>
+    ${expenses.length===0?`<div class="empty">还没有记录。上面记第一笔试试～</div>`:
+      `<div class="list">${expenses.map(expRow).join("")}</div>`}`;
+
+  // 交互
+  let payer=profileName, type="forOther";
+  segPick("segPayer", v=>payer=v);
+  segPick("segType", v=>type=v);
+  document.getElementById("addExp").onclick = async ()=>{
+    const amt=parseFloat(document.getElementById("amt").value);
+    if(!amt||amt<=0) return;
+    await supa.from("expenses").insert({payer, amount:amt, type,
+      description:document.getElementById("desc").value.trim(), spent_on:document.getElementById("date").value});
+    await refresh();
+  };
+  const settleBtn=document.getElementById("settle");
+  if(settleBtn) settleBtn.onclick=async()=>{
+    if(bal===0) return;
+    await supa.from("expenses").insert({payer:debtor, amount:Math.abs(bal), type:"settle", description:"结清", spent_on:today()});
+    await refresh();
+  };
+  bindDelete("expenses");
+}
+function expRow(e){
+  const isShared=e.type==="shared", isSettle=e.type==="settle";
+  const tag=isSettle?"结清":isShared?"分摊":"为对方";
+  const tc=isSettle?"var(--ok)":isShared?"var(--warn)":colorOf(e.payer);
+  return `<div class="card pad row" style="padding:12px 14px">
+    ${avatar(e.payer,36,colorOf(e.payer))}
+    <div style="flex:1;min-width:0">
+      <div class="row" style="gap:8px">
+        <span class="money" style="font-size:15px;font-weight:700">${money(Number(e.amount))}</span>
+        <span class="tag" style="color:${tc};background:${tc}1A">${tag}</span>
+      </div>
+      <div class="muted" style="font-size:13px;margin-top:3px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">
+        ${esc(e.payer)} 付 · ${fmtDate(e.spent_on)}${e.description?" · "+esc(e.description):""}</div>
+    </div>
+    <button class="del" data-del="${e.id}">✕</button></div>`;
+}
+
+// ---------- 家务 ----------
+function renderChores(){
+  const p0=names[0],p1=names[1];
+  const sorted=[...chores].sort((a,b)=> (b.done_on+b.created_at).localeCompare(a.done_on+a.created_at));
+  const last=sorted[0];
+  document.getElementById("body").innerHTML = `
+    <div class="card hero" style="margin-bottom:16px">
+      <div class="lbl" style="margin-bottom:10px">上一次做家务</div>
+      ${!last?`<div class="muted" style="font-size:14px">还没记录，下面记一条吧。</div>`:
+        `<div class="row" style="gap:14px">${avatar(last.who==="一起"?"合":last.who,46, last.who==="一起"?"var(--ink)":colorOf(last.who))}
+          <div style="flex:1"><div style="font-size:17px;font-weight:800">${esc(last.chore_name)}</div>
+          <div class="muted" style="font-size:13px;margin-top:3px">
+            <b style="color:${last.who==="一起"?"var(--ink)":colorOf(last.who)}">${esc(last.who)}</b> · ${fmtDate(last.done_on)} · ${last.type==="together"?"一起做的":"日常家务"}</div></div></div>`}
+    </div>
+
+    <div class="card pad" style="margin-bottom:16px">
+      <div style="font-weight:700;font-size:15px;margin-bottom:14px">记一条家务</div>
+      <div class="fld"><div class="lbl">谁做的</div>
+        <div class="seg" id="segWho">${[[p0,PC[0]],[p1,PC[1]],["一起","var(--ink)"]].map(([n,c])=>
+          `<button data-v="${esc(n)}" data-c="${c}" class="${n===profileName?'on':''}" style="${n===profileName?`background:${c}`:''}">${esc(n)==="一起"?"两人一起":esc(n)}</button>`).join("")}</div></div>
+      <div class="fld"><div class="lbl">家务类型</div>
+        <div class="seg" id="segCType"><button data-v="regular" class="on" style="background:var(--ink)">日常家务</button>
+          <button data-v="together">大扫除/一起做</button></div></div>
+      <div class="row" style="gap:10px">
+        <div class="fld" style="flex:1.4"><div class="lbl">做了什么</div><input id="cname" placeholder="洗碗 / 拖地 / 倒垃圾"></div>
+        <div class="fld" style="flex:1"><div class="lbl">日期</div><input id="cdate" type="date" value="${today()}"></div></div>
+      <button class="btn" id="addChore">记上这一条</button>
+    </div>
+
+    <div class="lbl" style="margin:4px 4px 10px">家务记录（${chores.length}）</div>
+    ${sorted.length===0?`<div class="empty">谁勤快，这里一目了然。</div>`:
+      `<div class="list">${sorted.map(c=>`
+        <div class="card pad row" style="padding:12px 14px">
+          ${avatar(c.who==="一起"?"合":c.who,34, c.who==="一起"?"var(--ink)":colorOf(c.who))}
+          <div style="flex:1;min-width:0"><div style="font-size:15px;font-weight:700">${esc(c.chore_name)}</div>
+            <div class="muted" style="font-size:13px;margin-top:2px">${esc(c.who)} · ${fmtDate(c.done_on)} · ${c.type==="together"?"一起做":"日常"}</div></div>
+          <button class="del" data-del="${c.id}">✕</button></div>`).join("")}</div>`}`;
+
+  let who=profileName, ctype="regular";
+  segPick("segWho", v=>who=v); segPick("segCType", v=>ctype=v);
+  document.getElementById("addChore").onclick=async()=>{
+    const nm=document.getElementById("cname").value.trim(); if(!nm) return;
+    await supa.from("chores").insert({who, chore_name:nm, type:ctype, done_on:document.getElementById("cdate").value});
+    await refresh();
+  };
+  bindDelete("chores");
+}
+
+// ---------- 一起做 / 提醒 ----------
+function renderTodo(){
+  const pending=activities.filter(a=>!a.done), done=activities.filter(a=>a.done);
+  const rowHtml=a=>`<div class="card pad row" style="padding:12px 14px;opacity:${a.done?.55:1}">
+    <button class="tgl" data-id="${a.id}" data-done="${a.done}" style="width:24px;height:24px;border-radius:8px;
+      border:2px solid ${a.done?'var(--ok)':'var(--line)'};background:${a.done?'var(--ok)':'transparent'};
+      color:#fff;cursor:pointer;flex-shrink:0;font-size:14px;line-height:1">${a.done?"✓":""}</button>
+    <div style="flex:1;min-width:0">
+      <div style="font-size:15px;font-weight:700;${a.done?'text-decoration:line-through':''}">${esc(a.title)}</div>
+      ${(a.note||a.when_text)?`<div class="muted" style="font-size:13px;margin-top:2px">${a.when_text?"⏰ "+esc(a.when_text):""}${a.when_text&&a.note?" · ":""}${esc(a.note)}</div>`:''}
+    </div><button class="del" data-del="${a.id}">✕</button></div>`;
+
+  document.getElementById("body").innerHTML = `
+    <div class="card pad" style="margin-bottom:16px">
+      <div style="font-weight:700;font-size:15px;margin-bottom:14px">加一个待办 / 提醒</div>
+      <div class="fld"><div class="lbl">要一起做的事</div><input id="title" placeholder="晚上一起去买纸 / 等修理工上门"></div>
+      <div class="row" style="gap:10px">
+        <div class="fld" style="flex:1.4"><div class="lbl">备注（可选）</div><input id="note" placeholder="地点 / 注意事项"></div>
+        <div class="fld" style="flex:1"><div class="lbl">时间（可选）</div><input id="when" placeholder="今晚 / 周六"></div></div>
+      <button class="btn" id="addAct">添加</button>
+    </div>
+    <div class="lbl" style="margin:4px 4px 10px">待办（${pending.length}）</div>
+    ${pending.length===0?`<div class="empty">暂时没有要一起做的事 🎈</div>`:`<div class="list">${pending.map(rowHtml).join("")}</div>`}
+    ${done.length?`<div class="lbl" style="margin:18px 4px 10px">已完成（${done.length}）</div><div class="list">${done.map(rowHtml).join("")}</div>`:''}`;
+
+  document.getElementById("addAct").onclick=async()=>{
+    const title=document.getElementById("title").value.trim(); if(!title) return;
+    await supa.from("activities").insert({title,
+      note:document.getElementById("note").value.trim(), when_text:document.getElementById("when").value.trim()});
+    await refresh();
+  };
+  document.querySelectorAll(".tgl").forEach(b=>b.onclick=async()=>{
+    await supa.from("activities").update({done: b.dataset.done!=="true"}).eq("id",b.dataset.id);
+    await refresh();
+  });
+  bindDelete("activities");
+}
+
+// ---------- 设置 ----------
+function openSettings(){
+  const wrap=document.createElement("div");
+  wrap.style.cssText="position:fixed;inset:0;background:rgba(38,34,29,.4);z-index:50;display:flex;align-items:flex-end;justify-content:center";
+  wrap.innerHTML=`<div style="width:100%;max-width:480px;background:var(--bg);border-radius:22px 22px 0 0;padding:20px 18px calc(24px + env(safe-area-inset-bottom))" id="sheet">
+    <div class="row" style="justify-content:space-between;margin-bottom:16px"><div style="font-size:18px;font-weight:800">设置</div>
+      <button class="del" id="closeSet" style="font-size:20px">✕</button></div>
+    <div class="lbl">两人的名字</div>
+    <div class="row" style="gap:10px;margin-bottom:8px"><input id="na" value="${esc(names[0])}"><input id="nb" value="${esc(names[1])}"></div>
+    <button class="ghost" id="saveN">保存名字</button>
+    <div style="height:1px;background:var(--line);margin:18px 0"></div>
+    <div class="lbl">当前身份：${esc(profileName)}</div>
+    <div class="row" style="gap:10px" id="whoSwitch"></div>
+    <button class="ghost" id="logout" style="margin-top:16px">退出登录</button>
+    <p class="hint" style="margin-top:16px">账本数据两人共享，实时同步。只有你们两个注册过的账号能登录看到。</p>
+  </div>`;
+  document.body.appendChild(wrap);
+  const sw=wrap.querySelector("#whoSwitch");
+  sw.innerHTML=names.map((n,i)=>`<button data-n="${esc(n)}" style="flex:1;padding:12px;border-radius:12px;
+    border:1.5px solid ${profileName===n?PC[i]:'var(--line)'};background:${profileName===n?PC[i]+'14':'var(--soft)'};
+    cursor:pointer;font-weight:700;color:var(--ink);font-family:inherit">我是 ${esc(n)}</button>`).join("");
+  wrap.querySelector("#closeSet").onclick=()=>wrap.remove();
+  wrap.onclick=e=>{ if(e.target===wrap) wrap.remove(); };
+  wrap.querySelector("#saveN").onclick=async()=>{
+    await saveNames(wrap.querySelector("#na").value.trim()||names[0], wrap.querySelector("#nb").value.trim()||names[1]);
+    wrap.remove(); await refresh();
+  };
+  sw.querySelectorAll("button").forEach(b=>b.onclick=async()=>{ await setProfile(b.dataset.n); wrap.remove(); render(); });
+  wrap.querySelector("#logout").onclick=async()=>{ await supa.auth.signOut(); wrap.remove(); };
+}
+
+// ---------- 复用 ----------
+function segPick(id, cb){
+  const seg=document.getElementById(id); if(!seg) return;
+  seg.querySelectorAll("button").forEach(b=>b.onclick=()=>{
+    seg.querySelectorAll("button").forEach(x=>{ x.classList.remove("on"); x.style.background=""; });
+    b.classList.add("on"); b.style.background = b.dataset.c || "var(--ink)";
+    cb(b.dataset.v);
+  });
+}
+function bindDelete(table){
+  document.querySelectorAll("[data-del]").forEach(b=>b.onclick=async()=>{
+    await supa.from(table).delete().eq("id", b.dataset.del); await refresh();
+  });
+}
+</script>
+</body>
+</html>
