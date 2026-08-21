@@ -176,7 +176,14 @@ async function loadNames(){
 async function saveSettings(a,b,ca,cb,bgIdx){
   names=[a,b]; colors=[ca,cb]; bgTheme=bgIdx;
   applyTheme(ca,cb,bgIdx);
-  await supa.from("settings").upsert({id:1,name_a:a,name_b:b,color_a:ca,color_b:cb,bg_theme:bgIdx});
+  const { error } = await supa.from("settings").upsert({id:1,name_a:a,name_b:b,color_a:ca,color_b:cb,bg_theme:bgIdx});
+  if(error){
+    // settings 表可能还没加 color_a/color_b/bg_theme 三列，先退回只存名字，
+    // 保证名字至少能保存成功；颜色本次会话内仍然生效，但刷新后会还原
+    await supa.from("settings").upsert({id:1,name_a:a,name_b:b});
+    return false;
+  }
+  return true;
 }
 async function ensureProfile(){
   const uid = session.user.id;
@@ -529,6 +536,7 @@ function openSettings(){
         border:2px solid ${i===bgTheme?'var(--ink)':'var(--line)'};background:${t.bg};cursor:pointer;
         font-size:11px;font-weight:700;color:var(--muted);font-family:inherit">${t.label}</button>`).join("")}</div>
     <button class="ghost" id="saveN">保存设置</button>
+    <p class="err" id="setErr" style="display:none;margin-top:8px"></p>
     <div style="height:1px;background:var(--line);margin:18px 0"></div>
     <div class="lbl">当前身份：${esc(profileName)}</div>
     <div class="row" style="gap:10px" id="whoSwitch"></div>
@@ -552,10 +560,16 @@ function openSettings(){
   wrap.querySelectorAll("#swB button").forEach(b=>b.onclick=()=>{ selB=b.dataset.c; refreshSwatches(); });
   wrap.querySelectorAll("#swBg button").forEach(b=>b.onclick=()=>{ selBg=Number(b.dataset.i); refreshSwatches(); });
   wrap.querySelector("#saveN").onclick=async()=>{
-    await saveSettings(
+    const ok=await saveSettings(
       wrap.querySelector("#na").value.trim()||names[0],
       wrap.querySelector("#nb").value.trim()||names[1],
       selA, selB, selBg);
+    if(!ok){
+      const errEl=wrap.querySelector("#setErr");
+      errEl.style.display="block";
+      errEl.textContent="名字保存成功，但颜色和背景没能存住（Supabase 的 settings 表还没加 color_a/color_b/bg_theme 三列），加完那三列后再来选一次就行。";
+      return;
+    }
     wrap.remove(); await refresh();
   };
   sw.querySelectorAll("button").forEach(b=>b.onclick=async()=>{ await setProfile(b.dataset.n); wrap.remove(); render(); });
