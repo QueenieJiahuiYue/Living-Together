@@ -324,7 +324,7 @@ function renderLedger(){
     ? `<div style="font-size:30px">🤝</div><div style="font-size:14px;color:var(--ok);font-weight:700;margin-top:2px">两清啦</div>`
     : `<div style="font-size:12px;color:var(--muted);margin-bottom:2px">${esc(debtor)} 该给 ${esc(creditor)}</div>
        <div class="money-lg" style="font-size:32px;font-weight:700;letter-spacing:-.5px;color:${colorOf(debtor)}">${money(Math.abs(bal))}</div>
-       <div style="font-size:20px;color:var(--muted);margin-top:-2px">${bal>0?"→":"←"}</div>`;
+       <div style="font-size:20px;color:var(--muted);margin-top:-2px">${bal>0?"←":"→"}</div>`;
 
   document.getElementById("body").innerHTML = `
     <div class="card hero" style="margin-bottom:16px">
