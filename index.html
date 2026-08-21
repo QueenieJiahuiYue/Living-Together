@@ -5,17 +5,17 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
 <meta name="apple-mobile-web-app-capable" content="yes" />
 <meta name="apple-mobile-web-app-status-bar-style" content="default" />
-<meta name="apple-mobile-web-app-title" content="Together" />
+<meta name="apple-mobile-web-app-title" content="TwoGather" />
 <meta name="theme-color" content="#FBF5EF" />
-<title>Together</title>
-<link rel="manifest" href='data:application/json,{"name":"Together","short_name":"Together","start_url":".","display":"standalone","background_color":"%23FBF5EF","theme_color":"%23FBF5EF","icons":[]}' />
+<title>TwoGather</title>
+<link rel="manifest" href='data:application/json,{"name":"TwoGather","short_name":"TwoGather","start_url":".","display":"standalone","background_color":"%23FBF5EF","theme_color":"%23FBF5EF","icons":[]}' />
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@500;600;700;800;900&family=Noto+Sans+SC:wght@400;500;700;900&display=swap" rel="stylesheet" />
 <style>
   :root{
     --bg:#FBF5EF; --card:#fff; --ink:#3A2E28; --muted:#A6978A; --line:#F0E4D6;
-    --soft:#FDF7F0; --ok:#3A9B78; --warn:#D9A441; --p0:#C97B4A; --p1:#6B4E71;
+    --soft:#FDF7F0; --ok:#3A9B78; --warn:#D9A441; --p0:#C08A6B; --p1:#8C7189;
   }
   *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
   html,body{margin:0;padding:0;}
@@ -100,8 +100,23 @@ const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBh
    ===================================================================== */
 
 const PC = ["var(--p0)","var(--p1)"];
+// 莫兰迪色系：低饱和、雾面的一组颜色，供两人各自选一个身份色
+const MORANDI = ["#C08A6B","#8C7189","#8FA38C","#7C93A8","#C68F8F","#B69C82","#7C8A99","#C7AD7A"];
+const BG_THEMES = [
+  {bg:"#FBF5EF",soft:"#FDF7F0",line:"#F0E4D6",label:"暖杏"},
+  {bg:"#F3F5EF",soft:"#F8FAF5",line:"#E4E9DD",label:"鼠尾草"},
+  {bg:"#F6F1F3",soft:"#FBF7F9",line:"#EBDEE3",label:"雾粉"},
+  {bg:"#F0F1F2",soft:"#F7F8F8",line:"#E1E3E5",label:"雾灰"},
+];
+function applyTheme(colorA,colorB,bgIdx){
+  const root=document.documentElement.style;
+  root.setProperty("--p0",colorA); root.setProperty("--p1",colorB);
+  const t=BG_THEMES[bgIdx]||BG_THEMES[0];
+  root.setProperty("--bg",t.bg); root.setProperty("--soft",t.soft); root.setProperty("--line",t.line);
+}
 const app = document.getElementById("app");
 let supa, session=null, profileName=null, names=["月","大乐"];
+let colors=[MORANDI[0],MORANDI[1]], bgTheme=0;
 let expenses=[], chores=[], activities=[];
 let tab="ledger";
 
@@ -148,11 +163,17 @@ async function route(){
 // ---------- 数据 ----------
 async function loadNames(){
   const { data } = await supa.from("settings").select("*").eq("id",1).single();
-  if(data){ names=[data.name_a||"月", data.name_b||"大乐"]; }
+  if(data){
+    names=[data.name_a||"月", data.name_b||"大乐"];
+    colors=[data.color_a||MORANDI[0], data.color_b||MORANDI[1]];
+    bgTheme = Number.isInteger(data.bg_theme) ? data.bg_theme : 0;
+  }
+  applyTheme(colors[0], colors[1], bgTheme);
 }
-async function saveNames(a,b){
-  names=[a,b];
-  await supa.from("settings").upsert({id:1,name_a:a,name_b:b});
+async function saveSettings(a,b,ca,cb,bgIdx){
+  names=[a,b]; colors=[ca,cb]; bgTheme=bgIdx;
+  applyTheme(ca,cb,bgIdx);
+  await supa.from("settings").upsert({id:1,name_a:a,name_b:b,color_a:ca,color_b:cb,bg_theme:bgIdx});
 }
 async function ensureProfile(){
   const uid = session.user.id;
@@ -188,7 +209,7 @@ async function refresh(){ await loadNames(); await loadAll(); render(); }
 // ---------- 登录页 ----------
 function renderLogin(){
   app.innerHTML = `<div class="center">
-    <h1 class="brand" style="text-align:center">Together</h1>
+    <h1 class="brand" style="text-align:center">TwoGather</h1>
     <p class="sub" style="text-align:center;margin-bottom:22px">登录你们的共用小窝 🏡</p>
     <div class="card pad">
       <div class="fld"><div class="lbl">邮箱</div><input id="email" type="email" placeholder="你的邮箱" autocomplete="username"></div>
@@ -226,7 +247,7 @@ function render(){
   const meColor = colorOf(profileName);
   app.innerHTML = `
     <div class="row" style="justify-content:space-between;padding:4px 2px 14px">
-      <div><h1 class="brand">Together</h1><div class="sub">${esc(names[0])} · ${esc(names[1])} 的共用小窝 🏡</div></div>
+      <div><h1 class="brand">TwoGather</h1><div class="sub">${esc(names[0])} · ${esc(names[1])} 的共用小窝 🏡</div></div>
       <div class="row" style="gap:8px">
         <div class="row" style="gap:6px;font-size:12px;color:var(--muted)">${avatar(profileName,24,meColor)}你</div>
         <button class="del" id="gear" style="font-size:18px">⚙️</button>
@@ -487,12 +508,24 @@ function renderTodo(){
 function openSettings(){
   const wrap=document.createElement("div");
   wrap.style.cssText="position:fixed;inset:0;background:rgba(38,34,29,.4);z-index:50;display:flex;align-items:flex-end;justify-content:center";
-  wrap.innerHTML=`<div style="width:100%;max-width:480px;background:var(--bg);border-radius:22px 22px 0 0;padding:20px 18px calc(24px + env(safe-area-inset-bottom))" id="sheet">
+  const swatch=(c,active)=>`<button type="button" data-c="${c}" style="width:30px;height:30px;border-radius:50%;
+    border:2px solid ${active?'var(--ink)':'transparent'};box-shadow:0 0 0 1px var(--line);background:${c};cursor:pointer;padding:0;flex-shrink:0"></button>`;
+  wrap.innerHTML=`<div style="width:100%;max-width:480px;background:var(--bg);border-radius:22px 22px 0 0;
+    padding:20px 18px calc(24px + env(safe-area-inset-bottom));max-height:85vh;overflow-y:auto" id="sheet">
     <div class="row" style="justify-content:space-between;margin-bottom:16px"><div style="font-size:18px;font-weight:800">设置</div>
       <button class="del" id="closeSet" style="font-size:20px">✕</button></div>
     <div class="lbl">两人的名字</div>
-    <div class="row" style="gap:10px;margin-bottom:8px"><input id="na" value="${esc(names[0])}"><input id="nb" value="${esc(names[1])}"></div>
-    <button class="ghost" id="saveN">保存名字</button>
+    <div class="row" style="gap:10px;margin-bottom:16px"><input id="na" value="${esc(names[0])}"><input id="nb" value="${esc(names[1])}"></div>
+    <div class="lbl">${esc(names[0])} 的颜色</div>
+    <div class="row" id="swA" style="gap:8px;flex-wrap:wrap;margin-bottom:16px">${MORANDI.map(c=>swatch(c,c===colors[0])).join("")}</div>
+    <div class="lbl">${esc(names[1])} 的颜色</div>
+    <div class="row" id="swB" style="gap:8px;flex-wrap:wrap;margin-bottom:16px">${MORANDI.map(c=>swatch(c,c===colors[1])).join("")}</div>
+    <div class="lbl">背景色调</div>
+    <div class="row" id="swBg" style="gap:8px;margin-bottom:8px">${BG_THEMES.map((t,i)=>
+      `<button type="button" data-i="${i}" style="flex:1;padding:10px 4px;border-radius:12px;
+        border:2px solid ${i===bgTheme?'var(--ink)':'var(--line)'};background:${t.bg};cursor:pointer;
+        font-size:11px;font-weight:700;color:var(--muted);font-family:inherit">${t.label}</button>`).join("")}</div>
+    <button class="ghost" id="saveN">保存设置</button>
     <div style="height:1px;background:var(--line);margin:18px 0"></div>
     <div class="lbl">当前身份：${esc(profileName)}</div>
     <div class="row" style="gap:10px" id="whoSwitch"></div>
@@ -506,8 +539,20 @@ function openSettings(){
     cursor:pointer;font-weight:700;color:var(--ink);font-family:inherit">我是 ${esc(n)}</button>`).join("");
   wrap.querySelector("#closeSet").onclick=()=>wrap.remove();
   wrap.onclick=e=>{ if(e.target===wrap) wrap.remove(); };
+  let selA=colors[0], selB=colors[1], selBg=bgTheme;
+  const refreshSwatches=()=>{
+    wrap.querySelectorAll("#swA button").forEach(b=>{ b.style.borderColor = b.dataset.c===selA?"var(--ink)":"transparent"; });
+    wrap.querySelectorAll("#swB button").forEach(b=>{ b.style.borderColor = b.dataset.c===selB?"var(--ink)":"transparent"; });
+    wrap.querySelectorAll("#swBg button").forEach(b=>{ b.style.borderColor = Number(b.dataset.i)===selBg?"var(--ink)":"var(--line)"; });
+  };
+  wrap.querySelectorAll("#swA button").forEach(b=>b.onclick=()=>{ selA=b.dataset.c; refreshSwatches(); });
+  wrap.querySelectorAll("#swB button").forEach(b=>b.onclick=()=>{ selB=b.dataset.c; refreshSwatches(); });
+  wrap.querySelectorAll("#swBg button").forEach(b=>b.onclick=()=>{ selBg=Number(b.dataset.i); refreshSwatches(); });
   wrap.querySelector("#saveN").onclick=async()=>{
-    await saveNames(wrap.querySelector("#na").value.trim()||names[0], wrap.querySelector("#nb").value.trim()||names[1]);
+    await saveSettings(
+      wrap.querySelector("#na").value.trim()||names[0],
+      wrap.querySelector("#nb").value.trim()||names[1],
+      selA, selB, selBg);
     wrap.remove(); await refresh();
   };
   sw.querySelectorAll("button").forEach(b=>b.onclick=async()=>{ await setProfile(b.dataset.n); wrap.remove(); render(); });
