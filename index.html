@@ -122,6 +122,12 @@ let supa, session=null, profileName=null, names=["月","大乐"];
 let colors=[MORANDI[0],MORANDI[1]], bgTheme=0;
 let expenses=[], chores=[], activities=[];
 let tab="ledger";
+// 正在填写但还没提交的表单内容。放在全局而不是每次 render() 里用 let 重新初始化，
+// 是因为另一个人操作会触发实时刷新、把整个页面重新渲染一遍——不这样做的话，
+// 你正在输入的内容会被刷没。提交成功后清空，提交失败/刷新时保留。
+let expDraft={payer:null,type:null,amt:"",date:"",desc:""};
+let choreDraft={who:null,ctype:"regular",cname:"",cdate:""};
+let todoDraft={title:"",note:"",when:""};
 
 // ---------- 工具 ----------
 const money = n => { const v=Math.round(n*100)/100; return "¥"+(Number.isInteger(v)?v:v.toFixed(2)); };
@@ -233,7 +239,22 @@ function subscribe(){
   // 兜底轮询：万一实时没连上，页面可见时每 10 秒拉一次
   pollTimer = setInterval(()=>{ if(!document.hidden) refresh(); },10000);
 }
-async function refresh(){ await loadNames(); await loadAll(); render(); }
+async function refresh(){
+  await loadNames(); await loadAll();
+  // 后台刷新时如果正焦点在某个输入框里，重绘之后把焦点和光标位置还原回去，
+  // 避免对方操作导致自己正在打字的输入框突然失焦
+  const a=document.activeElement;
+  const focusInfo = (a && (a.tagName==="INPUT"||a.tagName==="TEXTAREA") && a.id)
+    ? {id:a.id, start:a.selectionStart, end:a.selectionEnd} : null;
+  render();
+  if(focusInfo){
+    const el=document.getElementById(focusInfo.id);
+    if(el && (el.tagName==="INPUT"||el.tagName==="TEXTAREA")){
+      el.focus();
+      try{ el.setSelectionRange(focusInfo.start, focusInfo.end); }catch(e){}
+    }
+  }
+}
 
 // ---------- 登录页 ----------
 function renderLogin(){
@@ -370,18 +391,19 @@ function renderLedger(){
     <div class="card pad" style="margin-bottom:16px">
       <div class="title" style="margin-bottom:14px">✍️ 记一笔</div>
       <div class="fld"><div class="lbl">谁付的钱</div>
-        <div class="seg" id="segPayer">${[[p0,PC[0]],[p1,PC[1]]].map(([n,c])=>
-          `<button data-v="${esc(n)}" data-c="${c}" class="${n===profileName?'on':''}" style="${n===profileName?`background:${c}`:''}">
-            <span class="dot" style="background:${n===profileName?'#fff':c}"></span>${esc(n)}</button>`).join("")}</div></div>
+        <div class="seg" id="segPayer">${[[p0,PC[0]],[p1,PC[1]]].map(([n,c])=>{
+          const on = (expDraft.payer||profileName)===n;
+          return `<button data-v="${esc(n)}" data-c="${c}" class="${on?'on':''}" style="${on?`background:${c}`:''}">
+            <span class="dot" style="background:${on?'#fff':c}"></span>${esc(n)}</button>`;}).join("")}</div></div>
       <div class="fld"><div class="lbl">这笔属于</div>
         <div class="seg" id="segType">
-          <button data-v="forOther">💝 为对方花的</button>
-          <button data-v="shared">🤝 一起分摊 (对半)</button></div></div>
+          <button data-v="forOther" class="${expDraft.type==='forOther'?'on':''}" style="${expDraft.type==='forOther'?'background:var(--ink)':''}">💝 为对方花的</button>
+          <button data-v="shared" class="${expDraft.type==='shared'?'on':''}" style="${expDraft.type==='shared'?'background:var(--ink)':''}">🤝 一起分摊 (对半)</button></div></div>
       <div class="row" style="gap:10px">
-        <div class="fld" style="flex:1"><div class="lbl">金额</div><input id="amt" inputmode="decimal" placeholder="0.00"></div>
-        <div class="fld" style="flex:1"><div class="lbl">日期</div><input id="date" type="date" value="${today()}"></div>
+        <div class="fld" style="flex:1"><div class="lbl">金额</div><input id="amt" inputmode="decimal" placeholder="0.00" value="${esc(expDraft.amt)}"></div>
+        <div class="fld" style="flex:1"><div class="lbl">日期</div><input id="date" type="date" value="${expDraft.date||today()}"></div>
       </div>
-      <div class="fld"><div class="lbl">备注（买了啥）</div><input id="desc" placeholder="超市 / 电费 / 给对方买的礼物"></div>
+      <div class="fld"><div class="lbl">备注（买了啥）</div><input id="desc" placeholder="超市 / 电费 / 给对方买的礼物" value="${esc(expDraft.desc)}"></div>
       <button class="btn" id="addExp">记上这一笔</button>
     </div>
 
@@ -412,15 +434,18 @@ function renderLedger(){
       <div class="list">${history.slice().reverse().map(historyGroupHtml).join("")}</div>`:''}`;
 
   // 交互
-  let payer=profileName, type=null;
-  segPick("segPayer", v=>payer=v);
-  segPick("segType", v=>type=v);
+  segPick("segPayer", v=>expDraft.payer=v);
+  segPick("segType", v=>expDraft.type=v);
+  document.getElementById("amt").oninput=e=>expDraft.amt=e.target.value;
+  document.getElementById("date").oninput=e=>expDraft.date=e.target.value;
+  document.getElementById("desc").oninput=e=>expDraft.desc=e.target.value;
   document.getElementById("addExp").onclick = async ()=>{
-    const amt=parseFloat(document.getElementById("amt").value);
-    if(!amt||amt<=0||!type) return;
-    const { error } = await supa.from("expenses").insert({payer, amount:amt, type,
-      description:document.getElementById("desc").value.trim(), spent_on:document.getElementById("date").value});
-    if(error) alert("没保存成功："+error.message);
+    const amt=parseFloat(expDraft.amt);
+    if(!amt||amt<=0||!expDraft.type) return;
+    const { error } = await supa.from("expenses").insert({payer:expDraft.payer||profileName, amount:amt, type:expDraft.type,
+      description:expDraft.desc.trim(), spent_on:expDraft.date||today()});
+    if(error){ alert("没保存成功："+error.message); return; }
+    expDraft={payer:null,type:null,amt:"",date:"",desc:""};
     await refresh();
   };
   const settleBtn=document.getElementById("settle");
@@ -466,14 +491,15 @@ function renderChores(){
     <div class="card pad" style="margin-bottom:16px">
       <div class="title" style="margin-bottom:14px">🧺 记一条家务</div>
       <div class="fld"><div class="lbl">谁做的</div>
-        <div class="seg" id="segWho">${[[p0,PC[0]],[p1,PC[1]],["一起","var(--ink)"]].map(([n,c])=>
-          `<button data-v="${esc(n)}" data-c="${c}" class="${n===profileName?'on':''}" style="${n===profileName?`background:${c}`:''}">${esc(n)==="一起"?"🤝 两人一起":`<span class="dot" style="background:${n===profileName?'#fff':c}"></span>${esc(n)}`}</button>`).join("")}</div></div>
+        <div class="seg" id="segWho">${[[p0,PC[0]],[p1,PC[1]],["一起","var(--ink)"]].map(([n,c])=>{
+          const on=(choreDraft.who||profileName)===n;
+          return `<button data-v="${esc(n)}" data-c="${c}" class="${on?'on':''}" style="${on?`background:${c}`:''}">${n==="一起"?"🤝 两人一起":`<span class="dot" style="background:${on?'#fff':c}"></span>${esc(n)}`}</button>`;}).join("")}</div></div>
       <div class="fld"><div class="lbl">家务类型</div>
-        <div class="seg" id="segCType"><button data-v="regular" class="on" style="background:var(--ink)">🧹 日常家务</button>
-          <button data-v="together">✨ 大扫除/一起做</button></div></div>
+        <div class="seg" id="segCType"><button data-v="regular" class="${choreDraft.ctype==='regular'?'on':''}" style="${choreDraft.ctype==='regular'?'background:var(--ink)':''}">🧹 日常家务</button>
+          <button data-v="together" class="${choreDraft.ctype==='together'?'on':''}" style="${choreDraft.ctype==='together'?'background:var(--ink)':''}">✨ 大扫除/一起做</button></div></div>
       <div class="row" style="gap:10px">
-        <div class="fld" style="flex:1.4"><div class="lbl">做了什么</div><input id="cname" placeholder="洗碗 / 拖地 / 倒垃圾"></div>
-        <div class="fld" style="flex:1"><div class="lbl">日期</div><input id="cdate" type="date" value="${today()}"></div></div>
+        <div class="fld" style="flex:1.4"><div class="lbl">做了什么</div><input id="cname" placeholder="洗碗 / 拖地 / 倒垃圾" value="${esc(choreDraft.cname)}"></div>
+        <div class="fld" style="flex:1"><div class="lbl">日期</div><input id="cdate" type="date" value="${choreDraft.cdate||today()}"></div></div>
       <button class="btn" id="addChore">记上这一条</button>
     </div>
 
@@ -486,12 +512,14 @@ function renderChores(){
             <div class="muted" style="font-size:13px;margin-top:2px">${esc(c.who)} · ${fmtDate(c.done_on)} · ${c.type==="together"?"一起做":"日常"}</div></div>
           ${deleteZone(c.id, c.who==="一起"?null:c.who, c.delete_requested_by)}</div>`).join("")}</div>`}`;
 
-  let who=profileName, ctype="regular";
-  segPick("segWho", v=>who=v); segPick("segCType", v=>ctype=v);
+  segPick("segWho", v=>choreDraft.who=v); segPick("segCType", v=>choreDraft.ctype=v);
+  document.getElementById("cname").oninput=e=>choreDraft.cname=e.target.value;
+  document.getElementById("cdate").oninput=e=>choreDraft.cdate=e.target.value;
   document.getElementById("addChore").onclick=async()=>{
-    const nm=document.getElementById("cname").value.trim(); if(!nm) return;
-    const { error } = await supa.from("chores").insert({who, chore_name:nm, type:ctype, done_on:document.getElementById("cdate").value});
-    if(error) alert("没保存成功："+error.message);
+    const nm=choreDraft.cname.trim(); if(!nm) return;
+    const { error } = await supa.from("chores").insert({who:choreDraft.who||profileName, chore_name:nm, type:choreDraft.ctype, done_on:choreDraft.cdate||today()});
+    if(error){ alert("没保存成功："+error.message); return; }
+    choreDraft={who:null,ctype:"regular",cname:"",cdate:""};
     await refresh();
   };
   bindDelete("chores");
@@ -512,21 +540,25 @@ function renderTodo(){
   document.getElementById("body").innerHTML = `
     <div class="card pad" style="margin-bottom:16px">
       <div class="title" style="margin-bottom:14px">📋 加一个待办 / 提醒</div>
-      <div class="fld"><div class="lbl">要一起做的事</div><input id="title" placeholder="晚上一起去买纸 / 等修理工上门"></div>
+      <div class="fld"><div class="lbl">要一起做的事</div><input id="title" placeholder="晚上一起去买纸 / 等修理工上门" value="${esc(todoDraft.title)}"></div>
       <div class="row" style="gap:10px">
-        <div class="fld" style="flex:1.4"><div class="lbl">备注（可选）</div><input id="note" placeholder="地点 / 注意事项"></div>
-        <div class="fld" style="flex:1"><div class="lbl">时间（可选）</div><input id="when" placeholder="今晚 / 周六"></div></div>
+        <div class="fld" style="flex:1.4"><div class="lbl">备注（可选）</div><input id="note" placeholder="地点 / 注意事项" value="${esc(todoDraft.note)}"></div>
+        <div class="fld" style="flex:1"><div class="lbl">时间（可选）</div><input id="when" placeholder="今晚 / 周六" value="${esc(todoDraft.when)}"></div></div>
       <button class="btn" id="addAct">添加</button>
     </div>
     <div class="lbl" style="margin:4px 4px 10px">待办（${pending.length}）</div>
     ${pending.length===0?`<div class="empty">暂时没有要一起做的事 🎈</div>`:`<div class="list">${pending.map(rowHtml).join("")}</div>`}
     ${done.length?`<div class="lbl" style="margin:18px 4px 10px">已完成（${done.length}）</div><div class="list">${done.map(rowHtml).join("")}</div>`:''}`;
 
+  document.getElementById("title").oninput=e=>todoDraft.title=e.target.value;
+  document.getElementById("note").oninput=e=>todoDraft.note=e.target.value;
+  document.getElementById("when").oninput=e=>todoDraft.when=e.target.value;
   document.getElementById("addAct").onclick=async()=>{
-    const title=document.getElementById("title").value.trim(); if(!title) return;
+    const title=todoDraft.title.trim(); if(!title) return;
     const { error } = await supa.from("activities").insert({title,
-      note:document.getElementById("note").value.trim(), when_text:document.getElementById("when").value.trim()});
-    if(error) alert("没保存成功："+error.message);
+      note:todoDraft.note.trim(), when_text:todoDraft.when.trim()});
+    if(error){ alert("没保存成功："+error.message); return; }
+    todoDraft={title:"",note:"",when:""};
     await refresh();
   };
   document.querySelectorAll(".tgl").forEach(b=>b.onclick=async()=>{
