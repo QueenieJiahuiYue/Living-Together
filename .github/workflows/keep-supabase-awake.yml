@@ -1,0 +1,25 @@
+name: Keep Supabase Awake
+
+# Supabase 免费套餐的项目在大约 7 天没有 API 活动之后会被自动暂停（数据不会丢，
+# 但暂停期间打开网页会连不上，需要手动去 Supabase 后台点「恢复」）。
+# 这个任务定期去 ping 一下项目，让它一直保持活跃，不会被暂停。
+
+on:
+  schedule:
+    - cron: "0 6 */3 * *" # 每 3 天一次，远小于 7 天的暂停阈值
+  workflow_dispatch: {} # 也可以在 Actions 页面手动点一下立刻跑一次
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping Supabase project
+        run: |
+          # 和 index.html 里用的是同一个 anon key，这本来就是要给浏览器公开用的，
+          # 不是敏感信息（真正的访问控制靠 Supabase 的 Row Level Security）。
+          SUPABASE_URL="https://zmoguaybtdqwyvbgpzuc.supabase.co"
+          SUPABASE_ANON_KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inptb2d1YXlidGRxd3l2YmdwenVjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODczMjg5OTQsImV4cCI6MjEwMjkwNDk5NH0.wrngrq-gNb7MZ-peePNf15OQRrwQo6GGwlTYzyNd_9E"
+          code=$(curl -sS -o /dev/null -w "%{http_code}" \
+            "$SUPABASE_URL/rest/v1/settings?select=id&limit=1" \
+            -H "apikey: $SUPABASE_ANON_KEY")
+          echo "Supabase responded with HTTP $code (任何响应都算一次活动，不需要是 200)"
