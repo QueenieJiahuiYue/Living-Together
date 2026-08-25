@@ -134,6 +134,25 @@ function avatar(name,size,color,isYou){
   return `<div class="avatar${isYou?' you':''}" style="width:${size}px;height:${size}px;font-size:${size*0.42}px;background:${color};--ring:${color}">${esc((name||"?").slice(0,1))}</div>`;
 }
 
+// 删除权限：自己的记录直接删；对方的记录只能"申请删除"，要对方同意才真的删掉。
+// ownerName 为空（比如两人一起做的家务）时不受限制，谁都能直接删。
+function deleteZone(id, ownerName, requestedBy){
+  if(!ownerName) return `<button class="del" data-del="${id}">✕</button>`;
+  if(requestedBy===profileName){
+    return `<button class="del" data-undodel="${id}" style="font-size:11px;color:var(--warn);white-space:nowrap">撤销申请</button>`;
+  }
+  if(requestedBy){
+    return `<div style="text-align:right">
+      <div style="font-size:10px;color:var(--warn);font-weight:700;margin-bottom:3px;white-space:nowrap">对方想删除</div>
+      <div class="row" style="gap:6px;justify-content:flex-end">
+        <button class="del" data-approvedel="${id}" style="color:var(--ok);font-size:16px">✓</button>
+        <button class="del" data-rejectdel="${id}">✕</button>
+      </div></div>`;
+  }
+  if(ownerName===profileName) return `<button class="del" data-del="${id}">✕</button>`;
+  return `<button class="del" data-reqdel="${id}" title="申请删除，需要对方同意">🗑️</button>`;
+}
+
 // ---------- 启动 ----------
 function bootError(msg){
   app.innerHTML = `<div class="center"><div class="card pad">
@@ -399,8 +418,9 @@ function renderLedger(){
   document.getElementById("addExp").onclick = async ()=>{
     const amt=parseFloat(document.getElementById("amt").value);
     if(!amt||amt<=0||!type) return;
-    await supa.from("expenses").insert({payer, amount:amt, type,
+    const { error } = await supa.from("expenses").insert({payer, amount:amt, type,
       description:document.getElementById("desc").value.trim(), spent_on:document.getElementById("date").value});
+    if(error) alert("没保存成功："+error.message);
     await refresh();
   };
   const settleBtn=document.getElementById("settle");
@@ -425,7 +445,7 @@ function expRow(e){
       <div class="muted" style="font-size:13px;margin-top:3px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">
         ${esc(e.payer)} 付 · ${fmtDate(e.spent_on)}${e.description?" · "+esc(e.description):""}</div>
     </div>
-    <button class="del" data-del="${e.id}">✕</button></div>`;
+    ${deleteZone(e.id, e.payer, e.delete_requested_by)}</div>`;
 }
 
 // ---------- 家务 ----------
@@ -464,13 +484,14 @@ function renderChores(){
           ${avatar(c.who==="一起"?"合":c.who,34, c.who==="一起"?"var(--ink)":colorOf(c.who))}
           <div style="flex:1;min-width:0"><div style="font-size:15px;font-weight:700">${esc(c.chore_name)}</div>
             <div class="muted" style="font-size:13px;margin-top:2px">${esc(c.who)} · ${fmtDate(c.done_on)} · ${c.type==="together"?"一起做":"日常"}</div></div>
-          <button class="del" data-del="${c.id}">✕</button></div>`).join("")}</div>`}`;
+          ${deleteZone(c.id, c.who==="一起"?null:c.who, c.delete_requested_by)}</div>`).join("")}</div>`}`;
 
   let who=profileName, ctype="regular";
   segPick("segWho", v=>who=v); segPick("segCType", v=>ctype=v);
   document.getElementById("addChore").onclick=async()=>{
     const nm=document.getElementById("cname").value.trim(); if(!nm) return;
-    await supa.from("chores").insert({who, chore_name:nm, type:ctype, done_on:document.getElementById("cdate").value});
+    const { error } = await supa.from("chores").insert({who, chore_name:nm, type:ctype, done_on:document.getElementById("cdate").value});
+    if(error) alert("没保存成功："+error.message);
     await refresh();
   };
   bindDelete("chores");
@@ -503,8 +524,9 @@ function renderTodo(){
 
   document.getElementById("addAct").onclick=async()=>{
     const title=document.getElementById("title").value.trim(); if(!title) return;
-    await supa.from("activities").insert({title,
+    const { error } = await supa.from("activities").insert({title,
       note:document.getElementById("note").value.trim(), when_text:document.getElementById("when").value.trim()});
+    if(error) alert("没保存成功："+error.message);
     await refresh();
   };
   document.querySelectorAll(".tgl").forEach(b=>b.onclick=async()=>{
@@ -586,9 +608,16 @@ function segPick(id, cb){
   });
 }
 function bindDelete(table){
-  document.querySelectorAll("[data-del]").forEach(b=>b.onclick=async()=>{
-    await supa.from(table).delete().eq("id", b.dataset.del); await refresh();
+  const bind=(attr, fn)=>document.querySelectorAll(`[data-${attr}]`).forEach(b=>b.onclick=async()=>{
+    const { error } = await fn(b.dataset[attr]);
+    if(error) alert("操作失败："+error.message+"\n（如果提示列不存在，需要先给 "+table+" 表加 delete_requested_by 列）");
+    await refresh();
   });
+  bind("del", id=>supa.from(table).delete().eq("id", id));
+  bind("reqdel", id=>supa.from(table).update({delete_requested_by:profileName}).eq("id", id));
+  bind("undodel", id=>supa.from(table).update({delete_requested_by:null}).eq("id", id));
+  bind("approvedel", id=>supa.from(table).delete().eq("id", id));
+  bind("rejectdel", id=>supa.from(table).update({delete_requested_by:null}).eq("id", id));
 }
 </script>
 </body>
