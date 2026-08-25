@@ -233,7 +233,7 @@ function renderLogin(){
     const pw=document.getElementById("pw").value;
     const errEl=document.getElementById("loginErr"); errEl.textContent="";
     const { error } = await supa.auth.signInWithPassword({email,password:pw});
-    if(error){ errEl.textContent = "登录失败：邮箱或密码不对。"; }
+    if(error){ errEl.textContent = "登录失败：" + (error.message||"邮箱或密码不对") + "（错误代码：" + (error.code||error.status||"未知") + "）"; }
   };
 }
 
