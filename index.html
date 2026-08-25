@@ -441,7 +441,8 @@ function renderLedger(){
   document.getElementById("desc").oninput=e=>expDraft.desc=e.target.value;
   document.getElementById("addExp").onclick = async ()=>{
     const amt=parseFloat(expDraft.amt);
-    if(!amt||amt<=0||!expDraft.type) return;
+    if(!amt||amt<=0){ alert("先填一个大于 0 的金额"); return; }
+    if(!expDraft.type){ alert("还没选「这笔属于」——点一下「为对方花的」或「一起分摊」"); return; }
     const { error } = await supa.from("expenses").insert({payer:expDraft.payer||profileName, amount:amt, type:expDraft.type,
       description:expDraft.desc.trim(), spent_on:expDraft.date||today()});
     if(error){ alert("没保存成功："+error.message); return; }
@@ -516,7 +517,7 @@ function renderChores(){
   document.getElementById("cname").oninput=e=>choreDraft.cname=e.target.value;
   document.getElementById("cdate").oninput=e=>choreDraft.cdate=e.target.value;
   document.getElementById("addChore").onclick=async()=>{
-    const nm=choreDraft.cname.trim(); if(!nm) return;
+    const nm=choreDraft.cname.trim(); if(!nm){ alert("先填一下做了什么家务"); return; }
     const { error } = await supa.from("chores").insert({who:choreDraft.who||profileName, chore_name:nm, type:choreDraft.ctype, done_on:choreDraft.cdate||today()});
     if(error){ alert("没保存成功："+error.message); return; }
     choreDraft={who:null,ctype:"regular",cname:"",cdate:""};
@@ -554,7 +555,7 @@ function renderTodo(){
   document.getElementById("note").oninput=e=>todoDraft.note=e.target.value;
   document.getElementById("when").oninput=e=>todoDraft.when=e.target.value;
   document.getElementById("addAct").onclick=async()=>{
-    const title=todoDraft.title.trim(); if(!title) return;
+    const title=todoDraft.title.trim(); if(!title){ alert("先填一下要一起做的事"); return; }
     const { error } = await supa.from("activities").insert({title,
       note:todoDraft.note.trim(), when_text:todoDraft.when.trim()});
     if(error){ alert("没保存成功："+error.message); return; }
