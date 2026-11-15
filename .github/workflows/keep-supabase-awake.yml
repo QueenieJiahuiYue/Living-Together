@@ -3,16 +3,27 @@ name: Keep Supabase Awake
 # Supabase 免费套餐的项目在大约 7 天没有 API 活动之后会被自动暂停（数据不会丢，
 # 但暂停期间打开网页会连不上，需要手动去 Supabase 后台点「恢复」）。
 # 这个任务定期去 ping 一下项目，让它一直保持活跃，不会被暂停。
+#
+# 注意：GitHub 自己也有一条规则——一个仓库如果连续 60 天没有任何 push，
+# 它上面的定时任务（schedule）会被 GitHub 自动停用（跑这个任务本身不算
+# "push"，所以光靠这个任务是防不住这条规则的）。为了不再被停用，这个任务
+# 每次跑完都会顺手往仓库里提交一个小的时间戳文件，制造一次真实的 push，
+# 这样仓库就一直有活动，定时任务也就不会再被自动停用了。
 
 on:
   schedule:
     - cron: "0 6 */3 * *" # 每 3 天一次，远小于 7 天的暂停阈值
   workflow_dispatch: {} # 也可以在 Actions 页面手动点一下立刻跑一次
 
+permissions:
+  contents: write # 需要写权限才能提交心跳文件
+
 jobs:
   ping:
     runs-on: ubuntu-latest
     steps:
+      - uses: actions/checkout@v4
+
       - name: Ping Supabase project
         run: |
           # 和 index.html 里用的是同一个 anon key，这本来就是要给浏览器公开用的，
@@ -23,3 +34,15 @@ jobs:
             "$SUPABASE_URL/rest/v1/settings?select=id&limit=1" \
             -H "apikey: $SUPABASE_ANON_KEY")
           echo "Supabase responded with HTTP $code (任何响应都算一次活动，不需要是 200)"
+
+      - name: Record a heartbeat commit (keeps the repo "active" so this schedule never gets auto-disabled)
+        run: |
+          mkdir -p .github
+          date -u +"Last ping: %Y-%m-%dT%H:%M:%SZ" > .github/last-supabase-ping.txt
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add .github/last-supabase-ping.txt
+          if ! git diff --cached --quiet; then
+            git commit -m "chore: keep-alive heartbeat"
+            git push
+          fi
